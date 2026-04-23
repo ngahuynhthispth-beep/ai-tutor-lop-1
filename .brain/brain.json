@@ -1,0 +1,10 @@
+{
+  "project": {
+    "name": "AI-Tutor-Lop-1",
+    "description": "Web App giúp bé lớp 1 chấm bài qua ảnh, chỉ lỗi sai bằng giọng nói và hình ảnh để bé tự sửa.",
+    "created_at": "2026-04-23"
+  },
+  "tech_stack": [],
+  "features": [],
+  "decisions": []
+}
