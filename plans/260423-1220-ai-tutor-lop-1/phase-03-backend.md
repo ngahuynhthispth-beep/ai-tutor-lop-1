@@ -1,20 +1,20 @@
 # Phase 03: Core Logic (AI Grading)
 
-Status: ⬜ Pending
+Status: ✅ Complete
 Dependencies: Phase 02
 
 ## Objective
 Xây dựng bộ não xử lý việc chấm điểm và phát hiện lỗi sai.
 
 ## Tasks:
-- [ ] Viết API xử lý ảnh tải lên
-- [ ] Xây dựng Prompt cho AI để: nhận diện đề bài, nhận diện lời giải, so sánh và tìm lỗi
-- [ ] Định dạng kết quả trả về: tọa độ lỗi sai (để khoanh vùng) và lời nhận xét bằng văn bản
+- [x] Viết API xử lý ảnh tải lên
+- [x] Xây dựng Prompt cho AI để: nhận diện đề bài, nhận diện lời giải, so sánh và tìm lỗi
+- [x] Định dạng kết quả trả về: tọa độ lỗi sai (để khoanh vùng) và lời nhận xét bằng văn bản
 
 ## Implementation Steps
-1. [ ] Tạo Route `/api/grade` để nhận ảnh
-2. [ ] Tinh chỉnh Prompt AI để đạt độ chính xác cao nhất cho chữ viết tay lớp 1
-3. [ ] Xử lý logic trả về tọa độ lỗi trên ảnh
+1. [x] Tạo Route `/api/grade` để nhận ảnh
+2. [x] Xây dựng `GradingService` để kết nối logic AI và API
+3. [x] Chuẩn hóa dữ liệu trả về cho Frontend sử dụng
 
 ## Files to Create/Modify
 - `src/app/api/grade/route.ts` - API chính

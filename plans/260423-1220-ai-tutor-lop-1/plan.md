@@ -16,11 +16,11 @@ Dự án xây dựng một ứng dụng Web giúp học sinh lớp 1 tự kiểm
 
 | Phase | Name | Status | Progress |
 |-------|------|--------|----------|
-| 01 | Setup Environment | ⬜ Pending | 0% |
-| 02 | Database & AI Config | ⬜ Pending | 0% |
-| 03 | Core Logic (AI Grading) | ⬜ Pending | 0% |
-| 04 | Frontend UI (Kid-Friendly) | ⬜ Pending | 0% |
-| 05 | Voice & Rewards | ⬜ Pending | 0% |
+| 01 | Setup Environment | ✅ Complete | 100% |
+| 02 | Database & AI Config | ✅ Complete | 100% |
+| 03 | Core Logic (AI Grading) | ✅ Complete | 100% |
+| 04 | Frontend UI (Kid-Friendly) | ✅ Complete | 100% |
+| 05 | Voice & Rewards | ✅ Complete | 100% |
 | 06 | Final Integration & Test | ⬜ Pending | 0% |
 
 ## Quick Commands

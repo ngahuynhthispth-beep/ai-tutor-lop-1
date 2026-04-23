@@ -1,21 +1,21 @@
 # Phase 02: Database & AI Config
 
-Status: ⬜ Pending
+Status: ✅ Complete
 Dependencies: Phase 01
 
 ## Objective
 Thiết lập nơi lưu trữ dữ liệu (bài làm, sticker) và cấu hình kết nối với AI Vision.
 
 ## Tasks:
-- [ ] Thiết lập cấu trúc dữ liệu (Schema) cho User, Homework và Stickers
-- [ ] Cấu hình Google Gemini Vision API key
-- [ ] Viết hàm helper gọi AI để nhận diện hình ảnh
-- [ ] Thiết lập lưu trữ ảnh (có thể dùng Cloudinary hoặc Supabase Storage)
+- [x] Thiết lập cấu trúc dữ liệu (Schema) cho User, Homework và Stickers
+- [x] Cấu hình Google Gemini Vision API key
+- [x] Viết hàm helper gọi AI để nhận diện hình ảnh
+- [x] Thiết lập lưu trữ ảnh (Dùng LocalStorage & Base64 cho bản MVP)
 
 ## Implementation Steps
-1. [ ] Tạo file cấu hình API trong `src/lib/ai-config.ts`
-2. [ ] Thiết lập kết nối Database (Supabase hoặc SQLite)
-3. [ ] Viết script test kết nối với AI
+1. [x] Tạo file cấu hình API trong `src/lib/gemini.ts`
+2. [x] Thiết lập kết nối Database trong `src/lib/database.ts`
+3. [x] Định nghĩa kiểu dữ liệu trong `src/types/index.ts`
 
 ## Files to Create/Modify
 - `src/lib/gemini.ts` - Kết nối AI
