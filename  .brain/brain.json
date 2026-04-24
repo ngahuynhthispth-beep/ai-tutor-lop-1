@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "schema_version": "1.1.0",
+    "awf_version": "3.3.0",
+    "last_updated": "2026-04-23T14:15:00Z"
+  },
+  "project": {
+    "name": "AI-Tutor-Lop-1",
+    "description": "Web App giúp bé lớp 1 tự chấm bài qua ảnh với sự hỗ trợ của AI, khoanh vùng lỗi sai và tặng sticker khích lệ.",
+    "status": "Production-Ready",
+    "deployment_url": "https://tu-cham-diem-bai-kiem-tra.vercel.app"
+  },
+  "tech_stack": {
+    "frontend": {
+      "framework": "Next.js 15+",
+      "styling": "TailwindCSS",
+      "animation": "Framer Motion",
+      "effects": "Canvas Confetti"
+    },
+    "ai": {
+      "model": "Gemini 1.5 Flash",
+      "provider": "Google AI Studio"
+    },
+    "database": {
+      "type": "LocalStorage (MVP)",
+      "summary": "Lưu trữ bộ sưu tập Sticker và thông tin người dùng tạm thời trên trình duyệt."
+    }
+  },
+  "api_endpoints": [
+    {
+      "path": "/api/grade",
+      "method": "POST",
+      "explained": "Nhận ảnh base64 và môn học, trả về kết quả chấm điểm và tọa độ lỗi sai từ AI."
+    }
+  ],
+  "features": [
+    "Dashboard chọn môn học rực rỡ",
+    "Chụp ảnh/Tải ảnh bài tập",
+    "AI phân tích và khoanh vùng lỗi sai trực quan",
+    "Phát âm lời nhận xét bằng tiếng Việt (Text-to-Speech)",
+    "Hệ thống tặng Sticker và pháo hoa chúc mừng"
+  ],
+  "knowledge_items": {
+    "conventions": [
+      "Sử dụng Outfit font cho trẻ em",
+      "Màu sắc chủ đạo: Đỏ hồng (#FF6B6B), Xanh dương (#4D96FF), Vàng (#FFD93D)"
+    ]
+  }
+}

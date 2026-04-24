@@ -30,6 +30,7 @@ export interface GradingResult {
 }
 
 export interface ErrorLocation {
+  imageIndex?: number; // Số thứ tự của ảnh (0, 1, 2)
   x: number; // Tọa độ X (phần trăm 0-100)
   y: number; // Tọa độ Y (phần trăm 0-100)
   width: number;

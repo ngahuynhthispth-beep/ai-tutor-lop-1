@@ -8,20 +8,24 @@ import { GradingService } from "@/services/grading-service";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { image, subject } = body;
+    const { images, subject } = body; // 'images' bây giờ là một mảng
 
-    if (!image) {
+    if (!images || !Array.isArray(images) || images.length === 0) {
       return NextResponse.json({ error: "Thiếu dữ liệu ảnh" }, { status: 400 });
     }
 
-    // Thực hiện chấm điểm
-    const result = await GradingService.gradeHomework(image, subject || 'math');
+    // Thực hiện chấm điểm cho toàn bộ danh sách ảnh
+    const result = await GradingService.gradeHomework(images, subject || 'math');
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("API Error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { 
+        score: 0,
+        feedback: `Ối, có lỗi rồi: ${error.message || "Máy chủ gặp sự cố"}. Ba mẹ thử lại nhé!`,
+        errors: []
+      },
       { status: 500 }
     );
   }

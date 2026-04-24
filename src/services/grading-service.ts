@@ -6,12 +6,12 @@ import { GradingResult, Subject } from "@/types";
  */
 export const GradingService = {
   /**
-   * Chấm điểm bài tập từ ảnh base64
+   * Chấm điểm bài tập từ mảng các ảnh base64
    */
-  gradeHomework: async (imageBase64: string, subject: Subject): Promise<GradingResult> => {
+  gradeHomework: async (images: string[], subject: Subject): Promise<GradingResult> => {
     try {
-      // 1. Gửi ảnh sang Gemini để phân tích
-      const rawResult = await analyzeHomework(imageBase64, subject);
+      // 1. Gửi mảng ảnh sang Gemini để phân tích
+      const rawResult = await analyzeHomework(images, subject);
 
       if (!rawResult) {
         throw new Error("Không nhận được phản hồi từ AI");
@@ -22,6 +22,7 @@ export const GradingService = {
         score: rawResult.score || 0,
         feedback: rawResult.feedback || "AI không đưa ra nhận xét.",
         errors: (rawResult.errors || []).map((err: any) => ({
+          imageIndex: err.imageIndex ?? 0, // Mặc định là ảnh đầu tiên nếu AI quên
           x: err.x || 0,
           y: err.y || 0,
           width: err.width || 10,
@@ -31,11 +32,11 @@ export const GradingService = {
       };
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Lỗi trong GradingService:", error);
       return {
         score: 0,
-        feedback: "Ối, có lỗi gì đó khi chấm bài rồi. Ba mẹ kiểm tra lại kết nối mạng nhé!",
+        feedback: `Ối, có lỗi kỹ thuật rồi: ${error.message || "Không xác định"}. Ba mẹ thử lại nhé!`,
         errors: []
       };
     }

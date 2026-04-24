@@ -15,38 +15,86 @@ export default function GradePage() {
   const router = useRouter();
   const { speak } = useSpeech();
   
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GradingResult | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [showReward, setShowReward] = useState(false);
 
-  // Xử lý khi chọn ảnh
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-        setResult(null); // Reset kết quả cũ
+  // Hàm nén ảnh để giảm dung lượng trước khi gửi lên server
+  const compressImage = (base64: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 1200; // Giới hạn chiều rộng để ảnh nhẹ hơn
+        const scale = MAX_WIDTH / img.width;
+        
+        if (scale < 1) {
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scale;
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        }
+
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Nén chất lượng xuống 0.7 (70%) để giảm dung lượng đáng kể
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
       };
-      reader.readAsDataURL(file);
-      speak("Ba mẹ ơi, bé đã sẵn sàng học chưa nào?");
+    });
+  };
+
+  // Xử lý khi chọn nhiều ảnh
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []).slice(0, 3);
+    if (files.length > 0) {
+      setLoading(true);
+      const newImages: string[] = [];
+      let loadedCount = 0;
+
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const compressed = await compressImage(reader.result as string);
+          newImages.push(compressed);
+          loadedCount++;
+          if (loadedCount === files.length) {
+            setImages(newImages);
+            setResult(null);
+            setLoading(false);
+            speak(`Bé đã chụp ${files.length} trang bài tập. Ba mẹ bấm chấm điểm nhé!`);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  // Gửi ảnh đi chấm điểm
+  const [status, setStatus] = useState<string | null>(null);
+
+  // Gửi danh sách ảnh đi chấm điểm
   const handleGrade = async () => {
-    if (!image) return;
+    if (images.length === 0) return;
     setLoading(true);
     setHint(null);
-    speak("Đợi một chút nhé, cô giáo đang xem bài của bé đây...");
+    setStatus("Đang gửi ảnh...");
+    speak("Đợi một chút nhé, cô giáo đang xem kỹ từng trang bài của bé đây...");
 
     try {
       const response = await fetch("/api/grade", {
         method: "POST",
-        body: JSON.stringify({ image, subject }),
+        body: JSON.stringify({ images, subject }),
       });
+      
+      setStatus("Đang phân tích bài...");
+      
+      if (!response.ok) {
+        throw new Error(`Lỗi máy chủ (${response.status})`);
+      }
+
       const data = await response.json();
       setResult(data);
 
@@ -57,7 +105,6 @@ export default function GradePage() {
 
       // Nếu không có lỗi, tặng quà
       if (data.errors && data.errors.length === 0) {
-        // Lưu sticker vào DB
         db.addSticker({
           id: Date.now().toString(),
           userId: "user-1",
@@ -68,11 +115,17 @@ export default function GradePage() {
         
         setTimeout(() => setShowReward(true), 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Lỗi:", error);
+      setResult({
+        score: 0,
+        feedback: `Ối, có lỗi rồi: ${error.message}. Ba mẹ thử lại nhé!`,
+        errors: []
+      });
       speak("Ôi, máy móc bị hỏng một chút, bé thử lại sau nhé!");
     } finally {
       setLoading(false);
+      setStatus(null);
     }
   };
 
@@ -92,11 +145,16 @@ export default function GradePage() {
         <span>Quay lại</span>
       </button>
 
-      <h2 className="text-3xl font-extrabold text-[#4D96FF]">
-        {subject === 'math' ? 'Môn Toán 🔢' : 'Tiếng Việt ✍️'}
-      </h2>
+      <div className="flex justify-between items-end">
+        <h2 className="text-3xl font-extrabold text-[#4D96FF]">
+          {subject === 'math' ? 'Môn Toán 🔢' : 'Tiếng Việt ✍️'}
+        </h2>
+        {images.length > 0 && !result && (
+          <span className="text-sm font-bold text-gray-400">Đã chọn {images.length}/3 ảnh</span>
+        )}
+      </div>
 
-      {!image ? (
+      {images.length === 0 ? (
         // Màn hình chọn ảnh
         <motion.label 
           initial={{ scale: 0.9, opacity: 0 }}
@@ -106,14 +164,17 @@ export default function GradePage() {
           <div className="bg-[#4D96FF] p-6 rounded-full shadow-lg shadow-blue-200">
             <Camera size={64} className="text-white" />
           </div>
-          <span className="text-gray-400 font-bold text-xl px-8 text-center">Bấm vào đây để chụp ảnh bài tập của bé nhé!</span>
-          <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          <div className="text-center px-8">
+            <span className="text-gray-500 font-bold text-xl block">Bấm để chụp ảnh bài tập của bé!</span>
+            <span className="text-gray-400 font-medium text-sm mt-2 block">(Ba mẹ có thể chọn từ 1 đến 3 ảnh cùng lúc nhé)</span>
+          </div>
+          <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
         </motion.label>
       ) : (
         // Màn hình hiển thị ảnh và kết quả
         <div className="flex flex-col gap-6">
           <ImageAnnotator 
-            imageUrl={image} 
+            imageUrls={images} 
             errors={result?.errors || []} 
             onShowHint={handleShowHint} 
           />
@@ -128,7 +189,7 @@ export default function GradePage() {
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="bg-red-50 border-2 border-red-200 p-4 rounded-2xl text-red-600 font-bold text-lg text-center shadow-sm"
+              className="sticky bottom-24 z-10 bg-red-50 border-2 border-red-200 p-4 rounded-2xl text-red-600 font-bold text-lg text-center shadow-lg"
             >
               💡 {hint}
             </motion.div>
@@ -140,16 +201,23 @@ export default function GradePage() {
               <button
                 onClick={handleGrade}
                 disabled={loading}
-                className="w-full bg-[#FF6B6B] text-white py-5 rounded-[24px] font-bold text-2xl shadow-lg shadow-red-200 flex items-center justify-center gap-3 active:scale-95 transition-transform"
+                className="w-full bg-[#FF6B6B] text-white py-5 rounded-[24px] font-bold text-2xl shadow-lg shadow-red-200 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform disabled:bg-gray-400"
               >
-                {loading ? <Loader2 className="animate-spin" size={32} /> : "Chấm điểm ngay!"}
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={32} />
+                    {status && <span className="text-sm font-medium">{status}</span>}
+                  </>
+                ) : (
+                  "Chấm điểm ngay!"
+                )}
               </button>
             ) : (
               <div className="bg-green-50 p-6 rounded-[24px] border-2 border-green-200 flex flex-col items-center gap-2">
                 <CheckCircle2 className="text-green-500" size={48} />
                 <p className="text-green-700 font-bold text-xl text-center">{result.feedback}</p>
                 <button 
-                  onClick={() => setImage(null)}
+                  onClick={() => setImages([])}
                   className="mt-4 text-green-600 font-bold underline"
                 >
                   Chụp bài khác
@@ -159,10 +227,10 @@ export default function GradePage() {
             
             {!loading && !result && (
               <button 
-                onClick={() => setImage(null)}
+                onClick={() => setImages([])}
                 className="text-gray-400 font-semibold"
               >
-                Chọn ảnh khác
+                Chọn lại ảnh khác
               </button>
             )}
           </div>
