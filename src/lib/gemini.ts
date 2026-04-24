@@ -25,67 +25,56 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     ? "Bạn là một giáo viên tiểu học vui tính. Hãy kiểm tra bài tập toán lớp 1 trong ảnh. Chỉ ra lỗi sai và gợi ý bé tự sửa. TRẢ VỀ JSON: { score: number, feedback: string, errors: [{ imageIndex: number, x: number, y: number, width: number, height: number, message: string }] }"
     : "Bạn là một giáo viên Tiếng Việt tiểu học. Hãy kiểm tra bài viết chữ/chính tả trong ảnh. Chỉ ra từ sai và gợi ý bé tự sửa. TRẢ VỀ JSON: { score: number, feedback: string, errors: [{ imageIndex: number, x: number, y: number, width: number, height: number, message: string }] }";
 
-  const contents = [
-    {
-      parts: [
-        { text: prompt },
-        ...images.map(img => {
-          const base64Data = img.includes(",") ? img.split(",")[1] : img;
-          const mimeMatch = img.match(/^data:([^;]+);base64,/);
-          return {
-            inline_data: {
-              data: base64Data,
-              mime_type: mimeMatch ? mimeMatch[1] : "image/jpeg"
-            }
-          };
-        })
-      ]
+  try {
+    // Sử dụng SDK chính thức để tự động xử lý endpoint và phiên bản API
+    // Chúng ta sẽ thử với gemini-1.5-flash trước vì nó ổn định nhất cho xử lý ảnh
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const imageParts = images.map(img => {
+      const base64Data = img.includes(",") ? img.split(",")[1] : img;
+      const mimeMatch = img.match(/^data:([^;]+);base64,/);
+      return {
+        inlineData: {
+          data: base64Data,
+          mimeType: mimeMatch ? mimeMatch[1] : "image/jpeg"
+        }
+      };
+    });
+
+    const result = await model.generateContent([prompt, ...imageParts]);
+    const response = await result.response;
+    const text = response.text();
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
     }
-  ];
-
-  // Danh sách các model để thử lần lượt (ưu tiên các bản mới và ổn định nhất)
-  const modelsToTry = [
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-pro-latest",
-    "gemini-2.0-flash-exp",
-  ];
-
-  let lastError = "";
-  let lastErrorCode = 0;
-
-  for (const modelName of modelsToTry) {
-    try {
-      // Sử dụng v1beta để đảm bảo hỗ trợ các model mới nhất
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents })
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    throw new Error("AI trả về kết quả không đúng định dạng.");
+  } catch (error: any) {
+    console.error("Lỗi Gemini SDK:", error);
+    
+    // Nếu lỗi là do model không tồn tại, thử với bản pro hoặc flash đời mới hơn (fallback)
+    if (error.message?.includes("not found")) {
+      try {
+        const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        const result = await fallbackModel.generateContent([
+          prompt, 
+          ...images.map(img => ({
+            inlineData: {
+              data: img.includes(",") ? img.split(",")[1] : img,
+              mimeType: "image/jpeg"
+            }
+          }))
+        ]);
+        const text = (await result.response).text();
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) return JSON.parse(jsonMatch[0]);
-      } else {
-        lastError = result.error?.message || response.statusText;
-        lastErrorCode = response.status;
-        console.error(`Lỗi model ${modelName}: ${lastError}`);
-        
-        // Nếu lỗi là do API Key không hợp lệ thì dừng luôn, không thử model khác mất công
-        if (lastErrorCode === 400 && lastError.includes("API key not valid")) {
-          throw new Error("API Key của ba mẹ không hợp lệ hoặc đã hết hạn. Hãy kiểm tra lại nhé!");
-        }
+      } catch (e2) {
+        throw new Error(`Lỗi AI: ${error.message}`);
       }
-    } catch (e: any) {
-      lastError = e.message;
-      if (e.message.includes("API Key")) throw e; // Re-throw lỗi API Key
     }
+    
+    throw error;
   }
-
-  // Nếu tất cả đều thất bại
-  throw new Error(`Tất cả cô giáo đều bận (Lỗi: ${lastError}). Ba mẹ kiểm tra lại API Key hoặc thử lại sau nhé!`);
 }
