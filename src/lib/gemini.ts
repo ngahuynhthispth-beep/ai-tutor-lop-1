@@ -43,8 +43,9 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     }
   ];
 
-  // Danh sách các model để thử lần lượt (ưu tiên các bản ổn định)
+  // Danh sách các model để thử lần lượt (ưu tiên các bản đời mới và ổn định)
   const modelsToTry = [
+    "gemini-2.0-flash",
     "gemini-1.5-flash",
     "gemini-1.5-flash-8b",
     "gemini-1.5-pro",
@@ -55,7 +56,8 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
 
   for (const modelName of modelsToTry) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+      // Sử dụng v1beta để đảm bảo hỗ trợ các model mới nhất
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
