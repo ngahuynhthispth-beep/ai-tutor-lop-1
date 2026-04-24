@@ -26,9 +26,9 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     : "Bạn là một giáo viên Tiếng Việt tiểu học. Hãy kiểm tra bài viết chữ/chính tả trong ảnh. Chỉ ra từ sai và gợi ý bé tự sửa. TRẢ VỀ JSON: { score: number, feedback: string, errors: [{ imageIndex: number, x: number, y: number, width: number, height: number, message: string }] }";
 
   try {
-    // Sử dụng model Gemini 3 Flash đời mới nhất của năm 2026
-    // Đây là model mạnh mẽ và tương thích tốt nhất hiện nay
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+    // Ép buộc sử dụng phiên bản API v1 và model ổn định nhất
+    // Việc chỉ định rõ apiVersion giúp tránh các lỗi không tìm thấy model ở bản beta
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
 
     const imageParts = images.map(img => {
       const base64Data = img.includes(",") ? img.split(",")[1] : img;
@@ -57,7 +57,7 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     // Nếu lỗi là do model không tồn tại, thử với bản pro hoặc flash đời mới hơn (fallback)
     if (error.message?.includes("not found")) {
       try {
-        const fallbackModel = genAI.getGenerativeModel({ model: "gemini-3-flash-latest" });
+        const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }, { apiVersion: "v1" });
         const result = await fallbackModel.generateContent([
           prompt, 
           ...images.map(img => ({
