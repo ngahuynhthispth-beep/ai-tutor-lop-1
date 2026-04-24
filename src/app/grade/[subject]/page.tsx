@@ -103,8 +103,8 @@ export default function GradePage() {
         speak(data.feedback);
       }
 
-      // Nếu không có lỗi, tặng quà
-      if (data.errors && data.errors.length === 0) {
+      // Chỉ tặng quà khi điểm số > 0 và không có lỗi bài tập
+      if (data.score > 0 && data.errors && data.errors.length === 0) {
         db.addSticker({
           id: Date.now().toString(),
           userId: "user-1",
@@ -213,12 +213,20 @@ export default function GradePage() {
                 )}
               </button>
             ) : (
-              <div className="bg-green-50 p-6 rounded-[24px] border-2 border-green-200 flex flex-col items-center gap-2">
-                <CheckCircle2 className="text-green-500" size={48} />
-                <p className="text-green-700 font-bold text-xl text-center">{result.feedback}</p>
+              <div className={`${result.score > 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} p-6 rounded-[24px] border-2 flex flex-col items-center gap-2`}>
+                {result.score > 0 ? (
+                  <CheckCircle2 className="text-green-500" size={48} />
+                ) : (
+                  <div className="bg-red-500 text-white p-3 rounded-full mb-2">
+                    <Camera size={32} />
+                  </div>
+                )}
+                <p className={`${result.score > 0 ? 'text-green-700' : 'text-red-700'} font-bold text-xl text-center`}>
+                  {result.feedback}
+                </p>
                 <button 
                   onClick={() => setImages([])}
-                  className="mt-4 text-green-600 font-bold underline"
+                  className={`mt-4 ${result.score > 0 ? 'text-green-600' : 'text-red-600'} font-bold underline`}
                 >
                   Chụp bài khác
                 </button>

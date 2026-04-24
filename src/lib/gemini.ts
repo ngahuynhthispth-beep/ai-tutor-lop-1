@@ -43,12 +43,12 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     }
   ];
 
-  // Danh sách các model để thử lần lượt (ưu tiên các bản đời mới và ổn định)
+  // Danh sách các model để thử lần lượt (ưu tiên các bản mới và ổn định nhất)
   const modelsToTry = [
-    "gemini-2.0-flash",
     "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-pro",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-pro-latest",
+    "gemini-2.0-flash-exp",
   ];
 
   let lastError = "";
