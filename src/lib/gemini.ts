@@ -36,13 +36,12 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     };
   });
 
-  // Biệt đội "cô giáo" dự phòng cho năm 2026
+  // Biệt đội "cô giáo" siêu cấp năm 2026 - Dùng chính dòng Gemini 3 mới nhất
   const modelsToTry = [
-    "gemini-1.5-flash-002",
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-pro",
-    "gemini-1.5-flash-8b"
+    "gemini-3-flash",
+    "gemini-3-pro",
+    "gemini-2.0-flash-latest",
+    "gemini-1.5-flash-latest"
   ];
 
   let lastError: any = null;
