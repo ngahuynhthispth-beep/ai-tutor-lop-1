@@ -25,56 +25,51 @@ export async function analyzeHomework(images: string[], subject: 'math' | 'vietn
     ? "Bạn là một giáo viên tiểu học vui tính. Hãy kiểm tra bài tập toán lớp 1 trong ảnh. Chỉ ra lỗi sai và gợi ý bé tự sửa. TRẢ VỀ JSON: { score: number, feedback: string, errors: [{ imageIndex: number, x: number, y: number, width: number, height: number, message: string }] }"
     : "Bạn là một giáo viên Tiếng Việt tiểu học. Hãy kiểm tra bài viết chữ/chính tả trong ảnh. Chỉ ra từ sai và gợi ý bé tự sửa. TRẢ VỀ JSON: { score: number, feedback: string, errors: [{ imageIndex: number, x: number, y: number, width: number, height: number, message: string }] }";
 
-  try {
-    // Ép buộc sử dụng phiên bản API v1 và model ổn định nhất
-    // Việc chỉ định rõ apiVersion giúp tránh các lỗi không tìm thấy model ở bản beta
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
-
-    const imageParts = images.map(img => {
-      const base64Data = img.includes(",") ? img.split(",")[1] : img;
-      const mimeMatch = img.match(/^data:([^;]+);base64,/);
-      return {
-        inlineData: {
-          data: base64Data,
-          mimeType: mimeMatch ? mimeMatch[1] : "image/jpeg"
-        }
-      };
-    });
-
-    const result = await model.generateContent([prompt, ...imageParts]);
-    const response = await result.response;
-    const text = response.text();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    
-    throw new Error("AI trả về kết quả không đúng định dạng.");
-  } catch (error: any) {
-    console.error("Lỗi Gemini SDK:", error);
-    
-    // Nếu lỗi là do model không tồn tại, thử với bản pro hoặc flash đời mới hơn (fallback)
-    if (error.message?.includes("not found")) {
-      try {
-        const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }, { apiVersion: "v1" });
-        const result = await fallbackModel.generateContent([
-          prompt, 
-          ...images.map(img => ({
-            inlineData: {
-              data: img.includes(",") ? img.split(",")[1] : img,
-              mimeType: "image/jpeg"
-            }
-          }))
-        ]);
-        const text = (await result.response).text();
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) return JSON.parse(jsonMatch[0]);
-      } catch (e2) {
-        throw new Error(`Lỗi AI: ${error.message}`);
+  const imageParts = images.map(img => {
+    const base64Data = img.includes(",") ? img.split(",")[1] : img;
+    const mimeMatch = img.match(/^data:([^;]+);base64,/);
+    return {
+      inlineData: {
+        data: base64Data,
+        mimeType: mimeMatch ? mimeMatch[1] : "image/jpeg"
       }
+    };
+  });
+
+  // Biệt đội "cô giáo" dự phòng cho năm 2026
+  const modelsToTry = [
+    "gemini-1.5-flash-002",
+    "gemini-1.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash-8b"
+  ];
+
+  let lastError: any = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      console.log(`Đang thử gọi cô giáo: ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
+      const result = await model.generateContent([prompt, ...imageParts]);
+      const response = await result.response;
+      const text = response.text();
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (error: any) {
+      console.error(`Cô giáo ${modelName} đang bận:`, error.message);
+      lastError = error;
+      // Nếu là lỗi API Key không hợp lệ thì dừng luôn
+      if (error.message?.includes("API key not valid")) {
+        throw new Error("API Key của ba mẹ không hợp lệ. Hãy kiểm tra lại nhé!");
+      }
+      continue; // Thử cô giáo tiếp theo trong danh sách
     }
-    
-    throw error;
   }
+
+  // Nếu tất cả đều thất bại
+  throw new Error(`Tất cả các cô giáo đều đang bận chuẩn bị bài (Lỗi cuối: ${lastError?.message || "Không xác định"}). Ba mẹ thử lại sau nhé!`);
 }
